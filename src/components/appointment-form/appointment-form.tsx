@@ -21,6 +21,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,16 +41,11 @@ import {
   User,
 } from 'lucide-react';
 import { IMaskInput } from 'react-imask';
-import { format, min, setHours, setMinutes, startOfToday } from 'date-fns';
+import { format, setHours, setMinutes, startOfToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { PopoverContent } from '@radix-ui/react-popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
+import { toast } from 'sonner';
+import { createAppointment } from '@/app/actions';
 
 const appointmentFormSchema = z
   .object({
@@ -90,7 +92,18 @@ export const AppointmentForm = () => {
     },
   });
 
-  const onSubmit = (data: AppointmentFormValues) => {
+  const onSubmit = async (data: AppointmentFormValues) => {
+    const [hour, minute] = data.time.split(':');
+
+    const scheduleAt = new Date(data.scheduleAt);
+    scheduleAt.setHours(Number(hour), Number(minute), 0, 0);
+
+    await createAppointment({
+      ...data,
+      scheduleAt,
+    });
+
+    toast.success(`Agendamento criado com sucesso!`);
     console.log(data);
   };
 

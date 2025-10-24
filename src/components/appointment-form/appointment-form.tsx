@@ -45,7 +45,9 @@ import { format, setHours, setMinutes, startOfToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { PopoverContent } from '@radix-ui/react-popover';
 import { toast } from 'sonner';
-import { createAppointment } from '@/app/actions';
+import { createAppointment, updateAppointment } from '@/app/actions';
+import type { Appointment } from '@/types/appointment';
+import { useEffect } from 'react';
 
 const appointmentFormSchema = z
   .object({
@@ -79,7 +81,15 @@ const appointmentFormSchema = z
 
 type AppointmentFormValues = z.infer<typeof appointmentFormSchema>;
 
-export const AppointmentForm = () => {
+type AppointmentFormProps = {
+  appointment?: Appointment;
+  children?: React.ReactNode;
+};
+
+export const AppointmentForm = ({
+  appointment,
+  children,
+}: AppointmentFormProps) => {
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
@@ -98,26 +108,37 @@ export const AppointmentForm = () => {
     const scheduleAt = new Date(data.scheduleAt);
     scheduleAt.setHours(Number(hour), Number(minute), 0, 0);
 
-    const result = await createAppointment({
-      ...data,
-      scheduleAt,
-    });
+    const isEdit = !!appointment?.id;
+
+    const result = isEdit
+      ? await updateAppointment(appointment.id, {
+          ...data,
+          scheduleAt,
+        })
+      : await createAppointment({
+          ...data,
+          scheduleAt,
+        });
 
     if (result?.error) {
       toast.error(result.error);
       return;
     }
 
-    toast.success(`Agendamento criado com sucesso!`);
+    toast.success(
+      `Agendamento ${isEdit ? 'atualizado' : 'criado'} com sucesso!`
+    );
 
     form.reset();
   };
 
+  useEffect(() => {
+    form.reset(appointment);
+  }, [appointment, form]);
+
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="brand">Novo Agendamento</Button>
-      </DialogTrigger>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
 
       <DialogContent
         variant="appointment"

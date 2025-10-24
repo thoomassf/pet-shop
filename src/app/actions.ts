@@ -15,6 +15,7 @@ type AppointmentData = z.infer<typeof appointmentSchema>;
 
 export async function createAppointment(data: AppointmentData) {
   try {
+    console.log('Data: ', data);
     const parsedData = appointmentSchema.parse(data);
 
     const { scheduleAt } = parsedData;
@@ -45,7 +46,11 @@ export async function createAppointment(data: AppointmentData) {
 
     await prisma.appointment.create({
       data: {
-        ...parsedData,
+        tutorName: parsedData.tutorName,
+        petName: parsedData.petName,
+        phone: parsedData.phone,
+        description: parsedData.description,
+        scheduleAt: parsedData.scheduleAt,
       },
     });
   } catch (error) {
